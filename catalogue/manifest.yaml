@@ -43,7 +43,7 @@ spec:
           containerPort: 8080
         # important for deployment for autoscaling
         resources:
-          request:
+          requests:
             cpu: "100m"
             memory: "128Mi"
           limits:
@@ -86,7 +86,7 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: catalgoeu-hpa
+  name: catalogue-hpa
   namespace: ellamma-namaspace
   labels:
     project: ecommerce-project
