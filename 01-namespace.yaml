@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ellamma-namaspace
+  labels:
+    project: ellamma-ecommerce-database-project
+    environment: dev
