@@ -33,7 +33,7 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: user
+      - name: cart
         image: shankarntr/cart:v1
         imagePullPolicy: Always
         envFrom:
