@@ -19,52 +19,52 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-headless
+  name: redis-headless
   namespace: ellamma-namaspace
 spec:
   # if the service clusterIP none then it is a headless service
   clusterIP: None
   selector:
     project: ellamma-namaspace
-    component: mongodb
+    component: redis
     tier: db
   ports:
     - protocol: TCP
-      port: 27017 #service port
-      targetPort: 27017 #container port
+      port: 6379 #service port
+      targetPort: 6379 #container port
 
 ---
 
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb
+  name: redis
   namespace: ellamma-namaspace
 spec:
   selector:
     matchLabels:
       project: ellamma-namaspace
-      component: mongodb
+      component: redis
       tier: db
-  serviceName: "mongodb-headless" # this is headless service name
+  serviceName: "redis-headless" # this is headless service name
   replicas: 2 # by default is 1
   template:
     metadata:
       labels:
         project: ellamma-namaspace
-        component: mongodb
+        component: redis
         tier: db
     spec:
       containers:
       - name: mongodb
-        image: shankarntr/mongodb:v1
+        image: shankarntr/redis:v1
         volumeMounts:
-        - name: mongodb
-          mountPath: /data/db
+        - name: redis
+          mountPath: /data
   # this is pvc
   volumeClaimTemplates:
   - metadata:
-      name: mongodb
+      name: redis
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: "ellamma-ebs"
