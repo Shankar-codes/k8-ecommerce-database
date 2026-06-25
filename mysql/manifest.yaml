@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: ellamma-namaspace
+data:
+  my.cnf: |
+    [mysqld]
+    innodb_redo_log_capacity = 2G
+
+
+---
+
+# we need service, headless service, statefulset
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: ellamma-namaspace
+spec:
+  selector:
+    project: ellamma-namaspace
+    component: mysql
+    tier: db
+  ports:
+    - protocol: TCP
+      port: 3306 #service port
+      targetPort: 3306 #container port
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+  namespace: ellamma-namaspace
+spec:
+  # if the service clusterIP none then it is a headless service
+  clusterIP: None
+  selector:
+    project: ellamma-namaspace
+    component: mysql
+    tier: db
+  ports:
+    - protocol: TCP
+      port: 3306 #service port
+      targetPort: 3306 #container port
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: ellamma-namaspace
+spec:
+  selector:
+    matchLabels:
+      project: ellamma-namaspace
+      component: mysql
+      tier: db
+  serviceName: "mysql-headless" # this is headless service name
+  replicas: 2 # by default is 1
+  template:
+    metadata:
+      labels:
+        project: ellamma-namaspace
+        component: mysql
+        tier: db
+    spec:
+      containers:
+      - name: mongodb
+        image: shankarntr/mysql:v1
+        envFrom:
+        - configMapRef:
+            name: mysql-config
+        volumeMounts:
+        - name: mysql-config
+          mountPath: /etc/mysql/conf.d/my.cnf
+          subPath: my.cnf
+      volumes:
+          - name: mysql-config
+            configMap:
+              name: mysql-config
+  # this is pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "ellamma-ebs"
+      resources:
+        requests:
+          storage: 1Gi
