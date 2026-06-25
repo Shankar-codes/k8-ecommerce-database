@@ -11,8 +11,8 @@ spec:
     tier: db
   ports:
     - protocol: TCP
-      port: 27017 #service port
-      targetPort: 27017 #container port
+      port: 6379 #service port
+      targetPort: 6379 #container port
 
 ---
 
@@ -56,7 +56,7 @@ spec:
         tier: db
     spec:
       containers:
-      - name: mongodb
+      - name: redis
         image: shankarntr/redis:v1
         volumeMounts:
         - name: redis
