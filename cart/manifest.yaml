@@ -87,7 +87,7 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: user-hpa
+  name: cart-hpa
   namespace: ellamma-namaspace
   labels:
     project: ecommerce-project
