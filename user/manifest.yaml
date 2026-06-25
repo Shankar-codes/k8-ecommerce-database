@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-config
+  namespace: ellamma-namaspace
+data:
+  MONGO: "true"
+  REDIS_URL: "redis://redis:6379"
+  MONGO_URL: "mongodb://mongodb:27017/users"
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+  namespace: ellamma-namaspace
+  labels:
+    project: ecommerce-project
+    component: user
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      project: ecommerce-project
+      component: user
+      tier: backend
+  template:
+    metadata:
+      labels:
+        project: ecommerce-project
+        component: user
+        tier: backend
+    spec:
+      containers:
+      - name: user
+        image: shankarntr/user:v1
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: user-config
+        ports:
+        - name: liveness-port
+          containerPort: 8080
+        # important for deployment for autoscaling
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user
+  namespace: ellamma-namaspace
+spec:
+  selector:
+    project: ecommerce-project
+    component: user
+    tier: backend
+  ports:
+    - protocol: TCP
+      port: 8080 #service Port
+      targetPort: 8080 #container Port
+
+---
+
+# HPA - horizontal pod autoscaler
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-hpa
+  namespace: ellamma-namaspace
+  labels:
+    project: ecommerce-project
+    component: user
+    tier: backend 
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 5 # in real time keep 65-70
+
