@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalogue-config
+  namespace: ellamma-namaspace
+data:
+  MONGO: "true"
+  MONGO_URL: "mongodb://mongodb:27017/catalogue"
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalogue
+  namespace: ellamma-namaspace
+  labels:
+    project: ecommerce-project
+    component: catalogue
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      project: ecommerce-project
+      component: catalogue
+      tier: backend
+  template:
+    metadata:
+      labels:
+        project: ecommerce-project
+        component: catalogue
+        tier: backend
+    spec:
+      containers:
+      - name: catalogue
+        image: shankarntr/catalogue:v1
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: catalogue-config
+        ports:
+        - name: liveness-port
+          containerPort: 8080
+        # important for deployment for autoscaling
+        resources:
+          request:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "100m"
+            memory: "128mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalogue
+  namespace: ellamma-namaspace
+spec:
+  selector:
+    project: ecommerce-project
+    component: catalogue
+    tier: backend
+  ports:
+    - protocol: TCP
+      port: 8080 #service Port
+      targetPort: 8080 #container Port
