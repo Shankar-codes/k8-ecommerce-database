@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shipping-config
+  namespace: ellamma-namaspace
+data:
+  CART_ENDPOINT: "cart:8080"
+  DB_HOST: "mysql"
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping
+  namespace: ellamma-namaspace
+  labels:
+    project: ecommerce-project
+    component: shipping
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      project: ecommerce-project
+      component: shipping
+      tier: backend
+  template:
+    metadata:
+      labels:
+        project: ecommerce-project
+        component: shipping
+        tier: backend
+    spec:
+      containers:
+      - name: shipping
+        image: shankarntr/shipping:v1
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: shipping-config
+        ports:
+        - name: liveness-port
+          containerPort: 8080
+        # important for deployment for autoscaling
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: liveness-port
+          failureThreshold: 1
+          periodSeconds: 15
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping
+  namespace: ellamma-namaspace
+spec:
+  selector:
+    project: ecommerce-project
+    component: shipping
+    tier: backend
+  ports:
+    - protocol: TCP
+      port: 8080 #service Port
+      targetPort: 8080 #container Port
+
+---
+
+# HPA - horizontal pod autoscaler
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: shipping-hpa
+  namespace: ellamma-namaspace
+  labels:
+    project: ecommerce-project
+    component: shipping
+    tier: backend 
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: shipping
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 5 # in real time keep 65-70
+
