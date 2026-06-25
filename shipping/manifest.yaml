@@ -106,4 +106,3 @@ spec:
       target:
         type: Utilization
         averageUtilization: 5 # in real time keep 65-70
-
