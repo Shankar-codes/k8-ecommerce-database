@@ -114,13 +114,13 @@ spec:
             memory: "128Mi"
         readinessProbe:
           httpGet:
-            path: /health
+            path: / # for frontend health check should be just /
             port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
         livenessProbe:
           httpGet:
-            path: /health
+            path: / # for frontend health check should be just /
             port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
@@ -178,4 +178,3 @@ spec:
       target:
         type: Utilization
         averageUtilization: 5 # in real time keep 65-70
-
