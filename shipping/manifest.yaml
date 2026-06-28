@@ -44,23 +44,25 @@ spec:
         # important for deployment for autoscaling
         resources:
           requests:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: "200m"
+            memory: "256Mi"
           limits:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: "400m"
+            memory: "512Mi"
         readinessProbe:
           httpGet:
             path: /health
             port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
+          initialDelaySeconds: 60
         livenessProbe:
           httpGet:
             path: /health
             port: liveness-port
           failureThreshold: 1
           periodSeconds: 15
+          initialDelaySeconds: 60
 
 ---
 
